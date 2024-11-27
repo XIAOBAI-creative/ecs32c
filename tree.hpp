@@ -107,8 +107,7 @@ public:
     // current node's key and value.
     std::pair<K, V> operator*()
     {
-        BinaryTreeNode<K, V>* temp = current;//pointer temp for save current node refer, then let current opinter opdate to currevt right node, make suew iterator go right side tree's most left node
-        current = current->right;
+
         // This isn't actually what you want to return,
         // its just a placeholder so the compiler doesn't complain.
         return std::pair(current->key, current->value);
