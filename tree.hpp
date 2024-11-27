@@ -167,12 +167,15 @@ public:
         // THis is just to keep the compiler happy
         // so your code compiles, this is not what you
         // actually want to return
-            if (root == nullptr)//check if empty, then create new BinaryTreeNode and use key as key
-        {
-            root = new BinaryTreeNode<K, V>(key);
-            return root->value;
+         {
+        root = new BinaryTreeNode<K, V>(key);
+        return root->value;
         }
-        return root->find(key);
+        else
+        {
+        root = root->find(key);
+        return root->find(key)->value;
+        }
     }
 
     // This should return false if the tree
@@ -403,14 +406,13 @@ protected:
     // THis is just to keep the compiler happy
         // so your code compiles, this is not what you
         // actually want to return
-    V &find(const K &k)
+    BinaryTreeNode<K, V>* find(const K& k)
     //ccheck k bigger or smaller then key, then to go left/right tree, if null then ky not in tree, and locate at current node left/right sidde
     //so cteate new binarytreenode with key k snd use it as current node's left/right node, baisclly just a recursion
-    
-        {
-    if (k == key)
+    {    
+       if (k == key)
     {
-        return value;
+        return this;
     }
     else if (k < key)
     {
@@ -418,7 +420,10 @@ protected:
         {
             left = new BinaryTreeNode<K, V>(k);
         }
-        V &ret = left->find(k);
+        else
+        {
+            left = left->find(k);
+        }
         height = 1 + std::max(getHeight(left), getHeight(right));//updae height
         int balance = getBalance();
         if (balance > 1 && k < left->key)//left left, right right , l r, r l
@@ -436,7 +441,7 @@ protected:
             return leftRotate();
         }
 
-      return ret;
+      return this;
     }
     else
     {
@@ -464,7 +469,7 @@ protected:
             return leftRotate()->value;
         }
 
-        return ret;
+        return this;
     }
 }
     // And contains is a recursive search that doesn't
