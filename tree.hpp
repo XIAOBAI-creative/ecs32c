@@ -319,9 +319,7 @@ protected:
         }
     }
 
-    // 如果节点已被删除
-    if (this == nullptr)
-        return nullptr;
+
 
     // 更新高度
     height = 1 + std::max(getHeight(left), getHeight(right));
