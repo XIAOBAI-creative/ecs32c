@@ -371,8 +371,7 @@ protected:
                 right = right->erase(temp->key);
             }
         }
-        if (this == nullptr)
-            return nullptr;
+
 
         height = 1 + std::max(getHeight(left), getHeight(right));//same as next part
         int balance = getBalance();
