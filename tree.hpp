@@ -52,13 +52,22 @@ class BinaryTreeIterator : public std::input_iterator_tag
     {
          if (start && root != nullptr) {//start by most left node if iterator point smallest(left) element and root node not empty
             current = root;//start for traver
-            pushLeft(root);
-    }
-     else
+           while (root != nullptr)
         {
-            current = nullptr;
+            working_stack.push(root);
+            root = root->left;
+        }
+        if (!working_stack.empty())
+        {
+            current = working_stack.top();
+            working_stack.pop();
         }
     }
+    else
+    {
+        current = nullptr;
+    }
+}
 public:
     // This should return TRUE if there is still
     // items left in the iteration:
@@ -83,18 +92,30 @@ public:
     // and set it to current...
     void incr()
     {
-        if (current == nullptr && !working_stack.empty())//if current is null and stack not empry,we take a node in stack and assign to current, then pop this node from stack
+        if (current == nullptr)//if current is null and stack not empry,we take a node in stack and assign to current, then pop this node from stack
         //push all node to stack from current right node follow left path
+               return;
+
+    if (current->right != nullptr)
+    {
+        current = current->right;
+        while (current != nullptr)
         {
-            current = working_stack.top();
-            working_stack.pop();
-            pushLeft(current->right);
-        }
-        else if (current != nullptr)
-        {
-            pushLeft(current->right);
+            working_stack.push(current);
+            current = current->left;
         }
     }
+
+    if (!working_stack.empty())
+    {
+        current = working_stack.top();
+        working_stack.pop();
+    }
+    else
+    {
+        current = nullptr;
+    }
+}
 
     // This should just call incr
     void operator++()
@@ -168,15 +189,17 @@ public:
         // so your code compiles, this is not what you
         // actually want to return
          
-        if (root == nullptr) {
+    if (root == nullptr) {
         root = new BinaryTreeNode<K, V>(key);
         return root->value;
-        } else {
-        BinaryTreeNode<K, V>* node = root->find(key);
-        return node->value;
-        }
+    } 
+    else
+     {
+        BinaryTreeNode<K, V>* nodeWithKey = nullptr;
+        root = root->insert(key, nodeWithKey);
+        return nodeWithKey->value;
+      }
     }
-
     // This should return false if the tree
     // is empty, otherwise return root->contains
     bool contains(const K &key)
@@ -408,18 +431,32 @@ protected:
     BinaryTreeNode<K, V>* find(const K& k)
     //ccheck k bigger or smaller then key, then to go left/right tree, if null then ky not in tree, and locate at current node left/right sidde
     //so cteate new binarytreenode with key k snd use it as current node's left/right node, baisclly just a recursion
-    {    
-       if (k == key)
+{
+    if (k == key)
     {
+        nodeWithKey = this;
         return this;
     }
-   else if (k < key) {
+    else if (k < key) {
         if (left == nullptr) {
             left = new BinaryTreeNode<K, V>(k);
+            nodeWithKey = left;
         }
-        return left->find(k);
-   
-        height = 1 + std::max(getHeight(left), getHeight(right));//updae height
+        else {
+            left = left->insert(k, nodeWithKey);
+        }
+    }
+    else {
+        if (right == nullptr) {
+            right = new BinaryTreeNode<K, V>(k);
+            nodeWithKey = right;
+        }
+        else {
+            right = right->insert(k, nodeWithKey);
+        }
+    }
+
+       height = 1 + std::max(getHeight(left), getHeight(right));//updae height
         int balance = getBalance();
         if (balance > 1 && k < left->key)//left left, right right , l r, r l
             return rightRotate();
@@ -435,35 +472,10 @@ protected:
             right = right->rightRotate();
             return leftRotate();
         }
-    }
-    else {
-        if (right == nullptr) {
-            right = new BinaryTreeNode<K, V>(k);
-        }
-        return right->find(k);
     
-
-        // same with last part
-        height = 1 + std::max(getHeight(left), getHeight(right));
-        int balance = getBalance();
-        if (balance > 1 && k < left->key)
-            return rightRotate();
-        if (balance < -1 && k > right->key)
-            return leftRotate();
-        if (balance > 1 && k > left->key)
-        {
-            left = left->leftRotate();
-            return rightRotate();
-        }
-        if (balance < -1 && k < right->key)
-        {
-            right = right->rightRotate();
-            return leftRotate();
-        }
-
         return this;
     }
-}
+
     // And contains is a recursive search that doesn't
     // create new nodes, just checks if the key exists.
     bool contains(const K &k)
