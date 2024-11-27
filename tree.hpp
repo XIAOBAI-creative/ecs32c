@@ -356,6 +356,7 @@ protected:
                 if (temp == nullptr)//no sub node
                 {
                     temp = this;
+                    delete temp;
                     return nullptr;
                 }
                 else//use sub to instead
@@ -434,8 +435,6 @@ protected:
             right = right->rightRotate();
             return leftRotate();
         }
-
-      return this;
     }
     else {
         if (right == nullptr) {
