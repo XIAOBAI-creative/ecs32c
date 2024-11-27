@@ -67,7 +67,7 @@ public:
     // still more work to do...
     bool operator!=(BinaryTreeIterator<K, V> &other)
     {
-         return current != other.current//check if iterator continue or not
+         return current != other.current;//check if iterator continue or not
     }
 
     // This is the heart of the tree traversal algorithm.
@@ -112,7 +112,7 @@ public:
 
         // This isn't actually what you want to return,
         // its just a placeholder so the compiler doesn't complain.
-        return std::pair(current->key, current->value);
+        return std::pair<K,V>(current->key, current->value);
     }
 
 private:
@@ -400,35 +400,25 @@ protected:
     // If there is no left node, create it with k as the key.
     // Then recursively return find on the left.  Similar for
     // the right. 
-    V &find(const K &k)
-    {//ccheck k bigger or smaller then key, then to go left/right tree, if null then ky not in tree, and locate at current node left/right sidde
-    //so cteate new binarytreenode with key k snd use it as current node's left/right node, baisclly just a recursion
-    
-        if (k == key)
-        {
-            return value;
-        }
-        else if (k < key)
-        {
-            if (left == nullptr)
-            {
-                left = new BinaryTreeNode<K, V>(k);
-            }
-            return left->find(k);
-        }
-        else
-        {
-            if (right == nullptr)
-            {
-                right = new BinaryTreeNode<K, V>(k);
-            }
-            return right->find(k);
-        }
-        // THis is just to keep the compiler happy
+    // THis is just to keep the compiler happy
         // so your code compiles, this is not what you
         // actually want to return
-
+    V &find(const K &k)
+    //ccheck k bigger or smaller then key, then to go left/right tree, if null then ky not in tree, and locate at current node left/right sidde
+    //so cteate new binarytreenode with key k snd use it as current node's left/right node, baisclly just a recursion
+    
+        {
+    if (k == key)
+    {
+        return value;
     }
+    else if (k < key)
+    {
+        if (left == nullptr)
+        {
+            left = new BinaryTreeNode<K, V>(k);
+        }
+        V &ret = left->find(k);
         height = 1 + std::max(getHeight(left), getHeight(right));//updae height
         int balance = getBalance();
         if (balance > 1 && k < left->key)//left left, right right , l r, r l
@@ -446,8 +436,37 @@ protected:
             return leftRotate();
         }
 
-        return this;
+      return ret;
     }
+    else
+    {
+        if (right == nullptr)
+        {
+            right = new BinaryTreeNode<K, V>(k);
+        }
+        V &ret = right->find(k);
+
+        // same with last part
+        height = 1 + std::max(getHeight(left), getHeight(right));
+        int balance = getBalance();
+        if (balance > 1 && k < left->key)
+            return rightRotate()->value;
+        if (balance < -1 && k > right->key)
+            return leftRotate()->value;
+        if (balance > 1 && k > left->key)
+        {
+            left = left->leftRotate();
+            return rightRotate()->value;
+        }
+        if (balance < -1 && k < right->key)
+        {
+            right = right->rightRotate();
+            return leftRotate()->value;
+        }
+
+        return ret;
+    }
+}
     // And contains is a recursive search that doesn't
     // create new nodes, just checks if the key exists.
     bool contains(const K &k)
