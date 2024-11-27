@@ -405,7 +405,8 @@ protected:
     // THis is just to keep the compiler happy
         // so your code compiles, this is not what you
         // actually want to return
-    BinaryTreeNode<K, V>* find(const K& k)
+    V &find(const K &k)
+
     //ccheck k bigger or smaller then key, then to go left/right tree, if null then ky not in tree, and locate at current node left/right sidde
     //so cteate new binarytreenode with key k snd use it as current node's left/right node, baisclly just a recursion
     {    
