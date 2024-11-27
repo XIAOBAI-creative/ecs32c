@@ -48,19 +48,27 @@ class BinaryTreeIterator : public std::input_iterator_tag
     // For the start iterator, you should set current to root
     // and then call incr() so that the iterator is ready to 
     // actually start the traversal
-    BinaryTreeIterator(BinaryTreeNode<K, V> *root, bool start)
+   BinaryTreeIterator(BinaryTreeNode<K, V> *root, bool start)
+{
+    if (start && root != nullptr)
     {
-        if (start && root != nullptr)
+        pushLeft(root);
+        if (!working_stack.empty())
         {
-            current = nullptr;
-            pushLeft(root);
-            incr(); // 确保 current 被正确初始化
+            current = working_stack.top();
+            working_stack.pop();
         }
         else
         {
             current = nullptr;
         }
     }
+    else
+    {
+        current = nullptr;
+    }
+}
+
 public:
     // This should return TRUE if there is still
     // items left in the iteration:
@@ -75,19 +83,26 @@ public:
     // This is the heart of the tree traversal algorithm.
     // It needs to be called once in the constructor and 
     // once by each invocation of the ++ operator.
-    void incr()
+   void incr()
+{
+    if (current == nullptr)
+        return;
+
+    if (current->right != nullptr)
     {
-        if (!working_stack.empty())
-        {
-            current = working_stack.top();
-            working_stack.pop();
-            pushLeft(current->right);
-        }
-        else
-        {
-            current = nullptr;
-        }
+        pushLeft(current->right);
     }
+
+    if (!working_stack.empty())
+    {
+        current = working_stack.top();
+        working_stack.pop();
+    }
+    else
+    {
+        current = nullptr;
+    }
+}
 
     // This should just call incr
     void operator++()
@@ -103,13 +118,14 @@ public:
 
 private:
     void pushLeft(BinaryTreeNode<K, V> *node)
+{
+    while (node != nullptr)
     {
-        while (node != nullptr)
-        {
-            working_stack.push(node);
-            node = node->left;
-        }
+        working_stack.push(node);
+        node = node->left;
     }
+}
+
     // A pointer to the current node
     BinaryTreeNode<K, V> *current;
 
@@ -128,19 +144,21 @@ public:
     {
     }
 
-    V &operator[](const K &key)
+   V& operator[](const K& key)
+{
+    if (root == nullptr)
     {
-        if (root == nullptr)
-        {
-            root = new BinaryTreeNode<K, V>(key);
-            return root->value;
-        }
-        else
-        {
-            root = root->find(key); // 更新 root
-            return root->find(key)->value;
-        }
+        root = new BinaryTreeNode<K, V>(key);
+        return root->value;
     }
+    else
+    {
+        BinaryTreeNode<K, V>* foundNode = nullptr;
+        root = root->find(key, foundNode);
+        return foundNode->value;
+    }
+}
+
 
     bool contains(const K &key)
     {
@@ -260,134 +278,141 @@ protected:
         return current;
     }
 
-    BinaryTreeNode<K, V> *erase(const K &k)
+   BinaryTreeNode<K, V>* erase(const K& k)
+{
+    if (k < key)
     {
-        if (k < key)
-        {
-            if (left != nullptr)
-                left = left->erase(k);
-        }
-        else if (k > key)
-        {
-            if (right != nullptr)
-                right = right->erase(k);
-        }
-        else
-        {
-            if ((left == nullptr) || (right == nullptr))
-            {
-                BinaryTreeNode<K, V> *temp = left ? left : right;
-
-                if (temp == nullptr)
-                {
-                    delete this;
-                    return nullptr;
-                }
-                else
-                {
-                    *this = *temp;
-                    delete temp;
-                }
-            }
-            else
-            {
-                BinaryTreeNode<K, V> *temp = right->minValueNode();
-                key = temp->key;
-                value = temp->value;
-                right = right->erase(temp->key);
-            }
-        }
-
-        // 更新高度
-        height = 1 + std::max(getHeight(left), getHeight(right));
-
-        // 获取平衡因子
-        int balance = getBalance();
-
-        // 左左情况
-        if (balance > 1 && left && left->getBalance() >= 0)
-            return rightRotate();
-
-        // 左右情况
-        if (balance > 1 && left && left->getBalance() < 0)
-        {
-            left = left->leftRotate();
-            return rightRotate();
-        }
-
-        // 右右情况
-        if (balance < -1 && right && right->getBalance() <= 0)
-            return leftRotate();
-
-        // 右左情况
-        if (balance < -1 && right && right->getBalance() > 0)
-        {
-            right = right->rightRotate();
-            return leftRotate();
-        }
-
-        return this;
+        if (left != nullptr)
+            left = left->erase(k);
     }
-
-    BinaryTreeNode<K, V>* find(const K& k)
+    else if (k > key)
     {
-        if (k == key)
+        if (right != nullptr)
+            right = right->erase(k);
+    }
+    else
+    {
+        if ((left == nullptr) || (right == nullptr))
         {
-            return this;
-        }
-        else if (k < key)
-        {
-            if (left == nullptr)
+            BinaryTreeNode<K, V>* temp = left ? left : right;
+
+            if (temp == nullptr)
             {
-                left = new BinaryTreeNode<K, V>(k);
+                // 无子节点
+                delete this;
+                return nullptr;
             }
             else
             {
-                left = left->find(k);
+                // 有一个子节点
+                *this = *temp;
+                delete temp;
             }
         }
         else
         {
-            if (right == nullptr)
-            {
-                right = new BinaryTreeNode<K, V>(k);
-            }
-            else
-            {
-                right = right->find(k);
-            }
+            // 有两个子节点
+            BinaryTreeNode<K, V>* temp = right->minValueNode();
+            key = temp->key;
+            value = temp->value;
+            right = right->erase(temp->key);
         }
+    }
 
-        // 更新高度
-        height = 1 + std::max(getHeight(left), getHeight(right));
+    // 如果节点已被删除
+    if (this == nullptr)
+        return nullptr;
 
-        // 获取平衡因子
-        int balance = getBalance();
+    // 更新高度
+    height = 1 + std::max(getHeight(left), getHeight(right));
 
-        // 左左情况
-        if (balance > 1 && left && k < left->key)
-            return rightRotate();
+    // 获取平衡因子
+    int balance = getBalance();
 
-        // 左右情况
-        if (balance > 1 && left && k > left->key)
-        {
-            left = left->leftRotate();
-            return rightRotate();
-        }
+    // 平衡调整
+    if (balance > 1 && left && left->getBalance() >= 0)
+        return rightRotate();
 
-        // 右右情况
-        if (balance < -1 && right && k > right->key)
-            return leftRotate();
+    if (balance > 1 && left && left->getBalance() < 0)
+    {
+        left = left->leftRotate();
+        return rightRotate();
+    }
 
-        // 右左情况
-        if (balance < -1 && right && k < right->key)
-        {
-            right = right->rightRotate();
-            return leftRotate();
-        }
+    if (balance < -1 && right && right->getBalance() <= 0)
+        return leftRotate();
 
+    if (balance < -1 && right && right->getBalance() > 0)
+    {
+        right = right->rightRotate();
+        return leftRotate();
+    }
+
+    return this;
+}
+
+  BinaryTreeNode<K, V>* find(const K& k, BinaryTreeNode<K, V>*& foundNode)
+{
+    if (k == key)
+    {
+        foundNode = this;
         return this;
     }
+    else if (k < key)
+    {
+        if (left == nullptr)
+        {
+            left = new BinaryTreeNode<K, V>(k);
+            foundNode = left;
+        }
+        else
+        {
+            left = left->find(k, foundNode);
+        }
+    }
+    else
+    {
+        if (right == nullptr)
+        {
+            right = new BinaryTreeNode<K, V>(k);
+            foundNode = right;
+        }
+        else
+        {
+            right = right->find(k, foundNode);
+        }
+    }
+
+    // 更新高度
+    height = 1 + std::max(getHeight(left), getHeight(right));
+
+    // 获取平衡因子
+    int balance = getBalance();
+
+    // 左左情况
+    if (balance > 1 && left && k < left->key)
+        return rightRotate();
+
+    // 左右情况
+    if (balance > 1 && left && k > left->key)
+    {
+        left = left->leftRotate();
+        return rightRotate();
+    }
+
+    // 右右情况
+    if (balance < -1 && right && k > right->key)
+        return leftRotate();
+
+    // 右左情况
+    if (balance < -1 && right && k < right->key)
+    {
+        right = right->rightRotate();
+        return leftRotate();
+    }
+
+    return this;
+}
 
     bool contains(const K &k)
     {
