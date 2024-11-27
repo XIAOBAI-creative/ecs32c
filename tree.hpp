@@ -57,6 +57,10 @@ class BinaryTreeIterator : public std::input_iterator_tag
                 current = current->left;//before go lest, current node push stack for save path, update current as left node and go down for smaller number
             }
     }
+     else
+        {
+            current = nullptr;
+        }
     }
 public:
     // This should return TRUE if there is still
@@ -151,6 +155,7 @@ public:
             if (root == nullptr)//check if empty, then create new BinaryTreeNode and use key as key
         {
             root = new BinaryTreeNode<K, V>(key);
+            return root->value;
         }
         return root->find(key);
     }
@@ -241,7 +246,7 @@ public:
         {
             right->freetree();
             right = nullptr;
-        }
+        }delete this;
     }
 
 protected:
@@ -289,44 +294,40 @@ protected:
         // if have both left and right and we use lfet side biggest node to instead(right side smallesr also work i think) then if the node we pick do not have right tree then
         //connect currevt node to left node right side and return left node as new tree root node, if has right tree, then use left side right node to instead current node, connect to make node left point to lest, right point to right tree then detele current node
         {
-            if (left == nullptr)
-            {
-                BinaryTreeNode<K, V> *temp = right;
-                delete this;
-                return temp;
-            }
-            else if (right == nullptr)
-            {
-                BinaryTreeNode<K, V> *temp = left;
-                delete this;
-                return temp;
-            }
-            else
-            {
-                if (left->right == nullptr)
-                {
-                    left->right = right;
-                    BinaryTreeNode<K, V> *temp = left;
-                    delete this;
-                    return temp;
-                }
-                else
-                {
-                    BinaryTreeNode<K, V> *parent = left;
-                    BinaryTreeNode<K, V> *successor = left->right;
-                    while (successor->right != nullptr)
-                    {
-                        parent = successor;
-                        successor = successor->right;
-                    }
-                    parent->right = successor->left;
-                    successor->left = left;
-                    successor->right = right;
-                    delete this;
-                    return successor;
-                }
-            }
+        if (left == nullptr)
+        {
+            BinaryTreeNode<K, V> *temp = right;
+            delete this;
+            return temp;
         }
+        else if (right == nullptr)
+        {
+            BinaryTreeNode<K, V> *temp = left;
+            delete this;
+            return temp;
+        }
+        else
+        {
+            BinaryTreeNode<K, V> *successorParent = this;
+            BinaryTreeNode<K, V> *successor = right;
+
+            while (successor->left != nullptr)
+            {
+                successorParent = successor;
+                successor = successor->left;
+            }
+
+            if (successorParent != this)
+            {
+                successorParent->left = successor->right;
+                successor->right = right;
+            }
+            successor->left = left;
+            delete this;
+            return successor;
+        }
+    }
+
         // Again, not what you will always want to return...
         return this;
     }
