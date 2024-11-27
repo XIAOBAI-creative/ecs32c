@@ -196,7 +196,6 @@ public:
     else
      {
         BinaryTreeNode<K, V>* nodeWithKey = nullptr;
-        root = root->insert(key, nodeWithKey);
         return nodeWithKey->value;
       }
     }
