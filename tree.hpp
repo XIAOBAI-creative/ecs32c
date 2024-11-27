@@ -405,8 +405,7 @@ protected:
     // THis is just to keep the compiler happy
         // so your code compiles, this is not what you
         // actually want to return
-    V &find(const K &k)
-
+    BinaryTreeNode<K, V>* find(const K& k)
     //ccheck k bigger or smaller then key, then to go left/right tree, if null then ky not in tree, and locate at current node left/right sidde
     //so cteate new binarytreenode with key k snd use it as current node's left/right node, baisclly just a recursion
     {    
@@ -450,18 +449,18 @@ protected:
         height = 1 + std::max(getHeight(left), getHeight(right));
         int balance = getBalance();
         if (balance > 1 && k < left->key)
-            return rightRotate()->value;
+            return rightRotate()
         if (balance < -1 && k > right->key)
-            return leftRotate()->value;
+            return leftRotate()
         if (balance > 1 && k > left->key)
         {
             left = left->leftRotate();
-            return rightRotate()->value;
+            return rightRotate()
         }
         if (balance < -1 && k < right->key)
         {
             right = right->rightRotate();
-            return leftRotate()->value;
+            return leftRotate()
         }
 
         return this;
