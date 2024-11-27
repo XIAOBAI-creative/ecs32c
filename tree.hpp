@@ -449,18 +449,18 @@ protected:
         height = 1 + std::max(getHeight(left), getHeight(right));
         int balance = getBalance();
         if (balance > 1 && k < left->key)
-            return rightRotate()
+            return rightRotate();
         if (balance < -1 && k > right->key)
-            return leftRotate()
+            return leftRotate();
         if (balance > 1 && k > left->key)
         {
             left = left->leftRotate();
-            return rightRotate()
+            return rightRotate();
         }
         if (balance < -1 && k < right->key)
         {
             right = right->rightRotate();
-            return leftRotate()
+            return leftRotate();
         }
 
         return this;
