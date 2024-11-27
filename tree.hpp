@@ -167,14 +167,13 @@ public:
         // THis is just to keep the compiler happy
         // so your code compiles, this is not what you
         // actually want to return
-         {
+         
+        if (root == nullptr) {
         root = new BinaryTreeNode<K, V>(key);
         return root->value;
-        }
-        else
-        {
-        root = root->find(key);
-        return root->find(key)->value;
+        } else {
+        BinaryTreeNode<K, V>* node = root->find(key);
+        return node->value;
         }
     }
 
@@ -414,16 +413,12 @@ protected:
     {
         return this;
     }
-    else if (k < key)
-    {
-        if (left == nullptr)
-        {
+   else if (k < key) {
+        if (left == nullptr) {
             left = new BinaryTreeNode<K, V>(k);
         }
-        else
-        {
-            left = left->find(k);
-        }
+        return left->find(k);
+   
         height = 1 + std::max(getHeight(left), getHeight(right));//updae height
         int balance = getBalance();
         if (balance > 1 && k < left->key)//left left, right right , l r, r l
@@ -443,13 +438,12 @@ protected:
 
       return this;
     }
-    else
-    {
-        if (right == nullptr)
-        {
+    else {
+        if (right == nullptr) {
             right = new BinaryTreeNode<K, V>(k);
         }
-        V &ret = right->find(k);
+        return right->find(k);
+    
 
         // same with last part
         height = 1 + std::max(getHeight(left), getHeight(right));
