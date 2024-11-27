@@ -265,7 +265,7 @@ public:// The constructor, it simply setts the key and the left/right pointers.
     }
 
 protected:
-    int getHeight(BinaryTreeNode<K, V> *node)/if node not nullptr then return height, if not exist return 0
+    int getHeight(BinaryTreeNode<K, V> *node)//if node not nullptr then return height, if not exist return 0
     {
         return node ? node->height : 0;
     }
