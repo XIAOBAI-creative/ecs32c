@@ -52,10 +52,7 @@ class BinaryTreeIterator : public std::input_iterator_tag
     {
          if (start && root != nullptr) {//start by most left node if iterator point smallest(left) element and root node not empty
             current = root;//start for traver
-            while (current && current->left != nullptr) {//get smallesr which is lrftest
-                working_stack.push(current);
-                current = current->left;//before go lest, current node push stack for save path, update current as left node and go down for smaller number
-            }
+            pushLeft(root);
     }
      else
         {
@@ -70,7 +67,7 @@ public:
     // still more work to do...
     bool operator!=(BinaryTreeIterator<K, V> &other)
     {
-        return current != other.current;//check if iterator continue or not
+         return current != other.current//check if iterator continue or not
     }
 
     // This is the heart of the tree traversal algorithm.
@@ -86,15 +83,16 @@ public:
     // and set it to current...
     void incr()
     {
-          while (current != nullptr)//same with last part
-        {
-            working_stack.push(current);
-            current = current->left;
-        }
-        if (!working_stack.empty())//if stack not emppty, we go top node in stack and access itself and its right side, then pop
+        if (current == nullptr && !working_stack.empty())//if current is null and stack not empry,we take a node in stack and assign to current, then pop this node from stack
+        //push all node to stack from current right node follow left path
         {
             current = working_stack.top();
             working_stack.pop();
+            pushLeft(current->right);
+        }
+        else if (current != nullptr)
+        {
+            pushLeft(current->right);
         }
     }
 
@@ -118,6 +116,23 @@ public:
     }
 
 private:
+    void pushLeft(BinaryTreeNode<K, V> *node)//node and its left node push to stack
+        {
+            while (node != nullptr)
+            {
+                working_stack.push(node);
+                node = node->left;
+            }
+            if (!working_stack.empty())
+            {
+                current = working_stack.top();
+                working_stack.pop();
+            }
+            else
+            {
+                current = nullptr;
+            }
+        }
     // A pointer to the current node
     BinaryTreeNode<K, V> *current;
 
@@ -224,7 +239,7 @@ class BinaryTreeNode
 public:
     // The constructor, it simply setts the key and the left/right pointers.
     // Data defaults to whatever the default value is for the data type.
-    BinaryTreeNode(const K &keyin) : key(keyin), left(nullptr), right(nullptr)
+    BinaryTreeNode(const K &keyin) : key(keyin), left(nullptr), right(nullptr),height(1)//height for avl
     {
     }
 
@@ -250,7 +265,45 @@ public:
     }
 
 protected:
+    int getHeight(BinaryTreeNode<K, V> *node)//if node not nullptr then return height, if not exist return 0
+    {
+        return node ? node->height : 0;
+    }
+    int getBalance()//just left - right to see balance
+    {
+        return getHeight(left) - getHeight(right);
+    }
 
+    // left rotate
+    BinaryTreeNode<K, V> *leftRotate()
+    {
+        BinaryTreeNode<K, V> *y = right;
+        BinaryTreeNode<K, V> *T2 = y->left;
+        y->left = this;
+        right = T2;
+        height = 1 + std::max(getHeight(left), getHeight(right));
+        y->height = 1 + std::max(getHeight(y->left), getHeight(y->right));
+        return y;
+    }
+
+    // right rotate
+    BinaryTreeNode<K, V> *rightRotate()
+    {
+        BinaryTreeNode<K, V> *x = left;
+        BinaryTreeNode<K, V> *T2 = x->right;
+        x->right = this;
+        left = T2;
+        height = 1 + std::max(getHeight(left), getHeight(right));
+        x->height = 1 + std::max(getHeight(x->left), getHeight(x->right));
+        return x;
+    }
+    BinaryTreeNode<K, V> *minValueNode()
+    {//follow left node go down until leftest
+        BinaryTreeNode<K, V> *current = this;
+        while (current->left != nullptr)
+            current = current->left;
+        return current;
+    }
     // Removing a node from a binary tree, returning
     // a pointer to the now modified tree.
 
@@ -274,6 +327,7 @@ protected:
     // node to a temporary, have its left point to the current node's left
     // its right to the current node's right, delete this and return that
     // node.
+
     BinaryTreeNode<K, V> *erase(const K &k)
     {
         if (k < key)//check k and key is small then in left, vise versa
@@ -293,44 +347,51 @@ protected:
         else//if equal, then go right tree if node do not have left tree and vise versa then delete current node,
         // if have both left and right and we use lfet side biggest node to instead(right side smallesr also work i think) then if the node we pick do not have right tree then
         //connect currevt node to left node right side and return left node as new tree root node, if has right tree, then use left side right node to instead current node, connect to make node left point to lest, right point to right tree then detele current node
-        {
-        if (left == nullptr)
-        {
-            BinaryTreeNode<K, V> *temp = right;
-            delete this;
-            return temp;
-        }
-        else if (right == nullptr)
-        {
-            BinaryTreeNode<K, V> *temp = left;
-            delete this;
-            return temp;
-        }
-        else
-        {
-            BinaryTreeNode<K, V> *successorParent = this;
-            BinaryTreeNode<K, V> *successor = right;
-
-            while (successor->left != nullptr)
             {
-                successorParent = successor;
-                successor = successor->left;
-            }
-
-            if (successorParent != this)
+            if ((left == nullptr) || (right == nullptr))
             {
-                successorParent->left = successor->right;
-                successor->right = right;
+                BinaryTreeNode<K, V> *temp = left ? left : right;
+                if (temp == nullptr)//no sub node
+                {
+                    temp = this;
+                    return nullptr;
+                }
+                else//use sub to instead
+                {
+                    *this = *temp;
+                    delete temp;
+                }
             }
-            successor->left = left;
-            delete this;
-            return successor;
+            else//if two, get smallest
+            {   BinaryTreeNode<K, V> *temp = right->minValueNode();
+                key = temp->key;
+                value = temp->value;
+                right = right->erase(temp->key);
+            }
         }
-    }
+        if (this == nullptr)
+            return nullptr;
 
-        // Again, not what you will always want to return...
+        height = 1 + std::max(getHeight(left), getHeight(right));//same as next part
+        int balance = getBalance();
+        if (balance > 1 && left->getBalance() >= 0)
+            return rightRotate();
+        if (balance > 1 && left->getBalance() < 0)
+        {
+            left = left->leftRotate();
+            return rightRotate();
+        }
+        if (balance < -1 && right->getBalance() <= 0)
+            return leftRotate();
+        if (balance < -1 && right->getBalance() > 0)
+        {
+            right = right->rightRotate();
+            return leftRotate();
+        }
+
         return this;
     }
+
 
     // This seeks to recursively find a key, creating
     // a new node if necessary.
@@ -368,7 +429,25 @@ protected:
         // actually want to return
 
     }
+        height = 1 + std::max(getHeight(left), getHeight(right));//updae height
+        int balance = getBalance();
+        if (balance > 1 && k < left->key)//left left, right right , l r, r l
+            return rightRotate();
+        if (balance < -1 && k > right->key)
+            return leftRotate();
+        if (balance > 1 && k > left->key)
+        {
+            left = left->leftRotate();
+            return rightRotate();
+        }
+        if (balance < -1 && k < right->key)
+        {
+            right = right->rightRotate();
+            return leftRotate();
+        }
 
+        return this;
+    }
     // And contains is a recursive search that doesn't
     // create new nodes, just checks if the key exists.
     bool contains(const K &k)
@@ -395,4 +474,5 @@ protected:
     V value;
     BinaryTreeNode<K, V> *left;
     BinaryTreeNode<K, V> *right;
+    int height;//avl
 };
