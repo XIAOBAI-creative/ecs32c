@@ -50,8 +50,12 @@ class BinaryTreeIterator : public std::input_iterator_tag
     // actually start the traversal
     BinaryTreeIterator(BinaryTreeNode<K, V> *root, bool start)
     {
-        (void) root; (void) start;
-        HERE
+         if (start && root != nullptr) {//start by most left node if iterator point smallest(left) element and root node not empty
+            current = root;//start for traver
+            while (current && current->left != nullptr) {//get smallesr which is lrftest
+                working_stack.push(current);
+                current = current->left;//before go lest, current node push stack for save path, update current as left node and go down for smaller number
+            }
     }
 
 public:
@@ -62,9 +66,7 @@ public:
     // still more work to do...
     bool operator!=(BinaryTreeIterator<K, V> &other)
     {
-        (void)other;
-     HERE
-     return false;
+        return current != other.current;//check if iterator continue or not
     }
 
     // This is the heart of the tree traversal algorithm.
@@ -80,7 +82,16 @@ public:
     // and set it to current...
     void incr()
     {
-        HERE
+          while (current != nullptr)//same with last part
+        {
+            working_stack.push(current);
+            current = current->left;
+        }
+        if (!working_stack.empty())//if stack not emppty, we go top node in stack and access itself and its right side, then pop
+        {
+            current = working_stack.top();
+            working_stack.pop();
+        }
     }
 
     // This should just call incr
@@ -96,7 +107,8 @@ public:
     // current node's key and value.
     std::pair<K, V> operator*()
     {
-        HERE
+        BinaryTreeNode<K, V>* temp = current;//pointer temp for save current node refer, then let current opinter opdate to currevt right node, make suew iterator go right side tree's most left node
+        current = current->right;
         // This isn't actually what you want to return,
         // its just a placeholder so the compiler doesn't complain.
         return std::pair(current->key, current->value);
@@ -133,22 +145,30 @@ public:
     // a reference.
     V &operator[](const K &key)
     {
-        (void) key;
-        HERE
+ 
         // THis is just to keep the compiler happy
         // so your code compiles, this is not what you
         // actually want to return
-        V* tmp = new V();
-        return *tmp;
+            if (root == nullptr)//check if empty, then create new BinaryTreeNode and use key as key
+        {
+            root = new BinaryTreeNode<K, V>(key);
+        }
+        return root->find(key);
     }
 
     // This should return false if the tree
     // is empty, otherwise return root->contains
     bool contains(const K &key)
     {
-        (void) key;
-        HERE
-        return false;
+      if (root == nullptr)
+        {
+            return false;
+        }
+        else
+        {
+            return root->contains(key);
+        }
+    }
     }
 
     // Erases a node if a key matches.  If the
@@ -156,8 +176,10 @@ public:
     // that does nothing.
     void erase(const K &key)
     {
-        (void) key;
-        HERE;
+        if (root != nullptr)
+        {
+            root = root->erase(key);
+        }
     }
 
     // And the destructor for the binary tree.
@@ -167,7 +189,11 @@ public:
     // on the root.
     ~BinaryTree()
     {
-        HERE;
+          if (root != nullptr)
+        {
+            root->freetree();
+            root = nullptr;
+        }
     }
 
     // This returns the iterators.
@@ -207,7 +233,16 @@ public:
     // and this is a case where you want to do it.
     void freetree()
     {
-        HERE;
+         if (left != nullptr)
+        {
+            left->freetree();
+            left = nullptr;
+        }
+        if (right != nullptr)
+        {
+            right->freetree();
+            right = nullptr;
+        }
     }
 
 protected:
@@ -237,8 +272,62 @@ protected:
     // node.
     BinaryTreeNode<K, V> *erase(const K &k)
     {
-        (void) k;
-        HERE;
+        if (k < key)//check k and key is small then in left, vise versa
+        {
+            if (left != nullptr)
+            {
+                left = left->erase(k);
+            }
+        }
+        else if (k > key)
+        {
+            if (right != nullptr)
+            {
+                right = right->erase(k);
+            }
+        }
+        else//if equal, then go right tree if node do not have left tree and vise versa then delete current node,
+        // if have both left and right and we use lfet side biggest node to instead(right side smallesr also work i think) then if the node we pick do not have right tree then
+        //connect currevt node to left node right side and return left node as new tree root node, if has right tree, then use left side right node to instead current node, connect to make node left point to lest, right point to right tree then detele current node
+        {
+            if (left == nullptr)
+            {
+                BinaryTreeNode<K, V> *temp = right;
+                delete this;
+                return temp;
+            }
+            else if (right == nullptr)
+            {
+                BinaryTreeNode<K, V> *temp = left;
+                delete this;
+                return temp;
+            }
+            else
+            {
+                if (left->right == nullptr)
+                {
+                    left->right = right;
+                    BinaryTreeNode<K, V> *temp = left;
+                    delete this;
+                    return temp;
+                }
+                else
+                {
+                    BinaryTreeNode<K, V> *parent = left;
+                    BinaryTreeNode<K, V> *successor = left->right;
+                    while (successor->right != nullptr)
+                    {
+                        parent = successor;
+                        successor = successor->right;
+                    }
+                    parent->right = successor->left;
+                    successor->left = left;
+                    successor->right = right;
+                    delete this;
+                    return successor;
+                }
+            }
+        }
         // Again, not what you will always want to return...
         return this;
     }
@@ -251,29 +340,59 @@ protected:
     // Then recursively return find on the left.  Similar for
     // the right. 
     V &find(const K &k)
-    {
-                (void) k;
-        HERE
+    {//ccheck k bigger or smaller then key, then to go left/right tree, if null then ky not in tree, and locate at current node left/right sidde
+    //so cteate new binarytreenode with key k snd use it as current node's left/right node, baisclly just a recursion
+    
+        if (k == key)
+        {
+            return value;
+        }
+        else if (k < key)
+        {
+            if (left == nullptr)
+            {
+                left = new BinaryTreeNode<K, V>(k);
+            }
+            return left->find(k);
+        }
+        else
+        {
+            if (right == nullptr)
+            {
+                right = new BinaryTreeNode<K, V>(k);
+            }
+            return right->find(k);
+        }
         // THis is just to keep the compiler happy
         // so your code compiles, this is not what you
         // actually want to return
-        V* tmp = new V();
-        return *tmp;
 
     }
 
     // And contains is a recursive search that doesn't
     // create new nodes, just checks if the key exists.
     bool contains(const K &k)
-    {
-        (void) k;
-        HERE;
-        return false;
-        
+    {//use recursion to compare key and the key we want to determine way to search, to see if the key we want in the tree or not
+       if (k == key)
+        {
+            return true;
+        }
+        else if (k < key && left != nullptr)
+        {
+            return left->contains(k);
+        }
+        else if (k > key && right != nullptr)
+        {
+            return right->contains(k);
+        }
+        else
+        {
+            return false;
+        }
     }
 
     K key;
     V value;
     BinaryTreeNode<K, V> *left;
     BinaryTreeNode<K, V> *right;
-};
+}；
