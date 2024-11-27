@@ -57,7 +57,7 @@ class BinaryTreeIterator : public std::input_iterator_tag
                 current = current->left;//before go lest, current node push stack for save path, update current as left node and go down for smaller number
             }
     }
-
+    }
 public:
     // This should return TRUE if there is still
     // items left in the iteration:
@@ -169,7 +169,7 @@ public:
             return root->contains(key);
         }
     }
-    }
+    
 
     // Erases a node if a key matches.  If the
     // key does not match it simply is an operation
