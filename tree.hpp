@@ -431,31 +431,23 @@ protected:
     BinaryTreeNode<K, V>* find(const K& k)
     //ccheck k bigger or smaller then key, then to go left/right tree, if null then ky not in tree, and locate at current node left/right sidde
     //so cteate new binarytreenode with key k snd use it as current node's left/right node, baisclly just a recursion
-{
-    if (k == key)
+ {    
+       if (k == key)
     {
-        nodeWithKey = this;
         return this;
     }
-    else if (k < key) {
+   else if (k < key) {
         if (left == nullptr) {
             left = new BinaryTreeNode<K, V>(k);
-            nodeWithKey = left;
         }
-        else {
-            left = left->insert(k, nodeWithKey);
-        }
-    }
+        return left->find(k);
+
+           }
     else {
         if (right == nullptr) {
             right = new BinaryTreeNode<K, V>(k);
-            nodeWithKey = right;
         }
-        else {
-            right = right->insert(k, nodeWithKey);
-        }
-    }
-
+        return right->find(k);
        height = 1 + std::max(getHeight(left), getHeight(right));//updae height
         int balance = getBalance();
         if (balance > 1 && k < left->key)//left left, right right , l r, r l
@@ -475,7 +467,7 @@ protected:
     
         return this;
     }
-
+ }
     // And contains is a recursive search that doesn't
     // create new nodes, just checks if the key exists.
     bool contains(const K &k)
